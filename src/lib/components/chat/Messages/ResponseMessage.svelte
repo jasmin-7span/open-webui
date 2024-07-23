@@ -38,6 +38,7 @@
 	import Spinner from '$lib/components/common/Spinner.svelte';
 	import WebSearchResults from './ResponseMessage/WebSearchResults.svelte';
 	import Sparkles from '$lib/components/icons/Sparkles.svelte';
+	import ChartBlock from './ChartBlock.svelte';
 
 	export let message;
 	export let siblings;
@@ -75,7 +76,7 @@
 	let showRateComment = false;
 	let showCitationModal = false;
 
-	let selectedCitation = null;
+	let selectedCitation = null;	
 
 	$: tokens = marked.lexer(
 		replaceTokens(sanitizeResponseContent(message?.content), model?.name, $user?.name)
@@ -100,9 +101,25 @@
 		extensions: any;
 	};
 
+	// let isLoadingChart = true;
+
 	$: if (message) {
 		renderStyling();
 	}
+
+	// const fetchChartData = async () => {
+	// 	try {
+	// 		await new Promise((resolve) => setTimeout(resolve, 3000));
+	// 	} catch (error) {
+	// 		console.error('Error fetching chart data:', error);
+	// 	} finally {
+	// 		isLoadingChart = false;
+	// 	}
+	// };
+
+	// $: if(message?.content.includes('$$$')){
+	// 	fetchChartData()
+	// }
 
 	const renderStyling = async () => {
 		await tick();
@@ -385,6 +402,7 @@
 			querySelector: '.mermaid'
 		});
 	});
+
 </script>
 
 <CitationsModal bind:show={showCitationModal} citation={selectedCitation} />
@@ -524,12 +542,25 @@
 											/>
 										{/if}
 									{:else}
-										{@html marked.parse(token.raw, {
-											...defaults,
+										<!-- Always display the text before $$$ -->
+										{@html marked.parse(token.raw.split('$$$')[0] || '', {
 											gfm: true,
-											breaks: true,
-											renderer
+											breaks: true
 										})}
+
+										<!-- Conditionally render the chart -->
+										 {#if token.raw.includes('$$$')}
+											 <ChartBlock />
+										 {/if}
+
+										<!-- Always display the text after $$$ -->
+										{@html marked.parse(
+											token.raw.split('$$$')[1] ? token.raw.split('$$$')[1] : '',
+											{
+												gfm: true,
+												breaks: true
+											}
+										)}
 									{/if}
 								{/each}
 							{/if}

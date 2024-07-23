@@ -584,12 +584,15 @@
 					id: responseMessageId,
 					childrenIds: [],
 					role: 'assistant',
-					content: '',
+					content: 'test123 ',
 					model: model.id,
 					modelName: model.name ?? model.id,
 					userContext: null,
-					timestamp: Math.floor(Date.now() / 1000) // Unix epoch
+					timestamp: Math.floor(Date.now() / 1000), // Unix epoch
 				};
+
+				console.log('responseMessage', responseMessage);
+				
 
 				// Add message to history and Set currentId to messageId
 				history.messages[responseMessageId] = responseMessage;
@@ -817,122 +820,272 @@
 		if (res && res.ok) {
 			console.log('controller', controller);
 
-			const reader = res.body
-				.pipeThrough(new TextDecoderStream())
-				.pipeThrough(splitStream('\n'))
-				.getReader();
+		// Create a ReadableStream from an array
+		// function createReadableStreamFromArray(array: any) {
+		// 	let index = 0;
 
-			while (true) {
-				const { value, done } = await reader.read();
-				if (done || stopResponseFlag || _chatId !== $chatId) {
-					responseMessage.done = true;
-					messages = messages;
+		// 	return new ReadableStream({
+		// 		pull(controller) {
+        //     if (index < array.length) {
+        //         controller.enqueue(JSON.stringify(array[index]));
+        //         index++;
+        //     } else {
+        //         controller.close();
+        //     }
+        // },		
+		// 	});
+		// }
 
-					if (stopResponseFlag) {
-						controller.abort('User: Stop Response');
-					} else {
-						const messages = createMessagesList(responseMessageId);
-						await chatCompletedHandler(_chatId, model.id, responseMessageId, messages);
-					}
+		const reader = res.body
+			.pipeThrough(new TextDecoderStream())
+			.pipeThrough(splitStream('\n'))
+			.getReader();
 
-					_response = responseMessage.content;
-					break;
+		// Dummy response
+		// const TEST_DATA: any = [
+		// 	{
+		// 		model: 'llama3:latest',
+		// 		created_at: '2024-07-18T10:39:08.6256907Z',
+		// 		message: {
+		// 			role: 'assistant',
+		// 			content: 'Display chart demo'
+		// 		},
+		// 		done: false
+		// 	},
+		// 	{
+		// 		model: 'llama3:latest',
+		// 		created_at: '2024-07-18T11:33:42.0561841Z',
+		// 		message: {
+		// 			role: 'assistant',
+		// 			content: ' $$$ '
+		// 		},
+		// 		done: false
+		// 	},
+		// 	{
+		// 		model: 'llama3:latest',
+		// 		created_at: '2024-07-18T10:39:08.6256907Z',
+		// 		message: {
+		// 			role: 'assistant',
+		// 			content: ' Test'
+		// 		},
+		// 		done: false
+		// 	},
+		// 	{
+		// 		model: 'llama3:latest',
+		// 		created_at: '2024-07-18T10:39:08.6256907Z',
+		// 		message: {
+		// 			role: 'assistant',
+		// 			content: ' line'
+		// 		},
+		// 		done: false
+		// 	},
+		// 	{
+		// 		model: 'llama3:latest',
+		// 		created_at: '2024-07-18T10:39:08.6256907Z',
+		// 		message: {
+		// 			role: 'assistant',
+		// 			content: ' chart'
+		// 		},
+		// 		done: false
+		// 	},
+		// 	{
+		// 		model: 'llama3:latest',
+		// 		created_at: '2024-07-18T10:39:08.6256907Z',
+		// 		message: {
+		// 			role: 'assistant',
+		// 			content: ' bar'
+		// 		},
+		// 		done: false
+		// 	},
+		// 	{
+		// 		model: 'llama3:latest',
+		// 		created_at: '2024-07-18T10:39:08.6256907Z',
+		// 		message: {
+		// 			role: 'assistant',
+		// 			content: ' and'
+		// 		},
+		// 		done: false
+		// 	},
+		// 	{
+		// 		model: 'llama3:latest',
+		// 		created_at: '2024-07-18T10:39:08.6256907Z',
+		// 		message: {
+		// 			role: 'assistant',
+		// 			content: 'pie'
+		// 		},
+		// 		done: false
+		// 	},
+		// 	{
+		// 		model: 'llama3:latest',
+		// 		created_at: '2024-07-18T10:39:08.6256907Z',
+		// 		message: {
+		// 			role: 'assistant',
+		// 			content: ' chart'
+		// 		},
+		// 		done: false
+		// 	},
+		// 	{
+		// 		model: 'llama3:latest',
+		// 		created_at: '2024-07-18T10:39:08.6256907Z',
+		// 		message: {
+		// 			role: 'assistant',
+		// 			content: ' data'
+		// 		},
+		// 		done: false
+		// 	},
+		// 	{
+		// 		model: 'llama3:latest',
+		// 		created_at: '2024-07-18T10:39:08.6256907Z',
+		// 		message: {
+		// 			role: 'assistant',
+		// 			content: ' with'
+		// 		},
+		// 		done: false
+		// 	},
+		// 	{
+		// 		model: 'llama3:latest',
+		// 		created_at: '2024-07-18T10:39:08.6256907Z',
+		// 		message: {
+		// 			role: 'assistant',
+		// 			content: ' mock'
+		// 		},
+		// 		done: false
+		// 	},
+		// 	{
+		// 		model: 'llama3:latest',
+		// 		created_at: '2024-07-18T10:39:08.6256907Z',
+		// 		message: {
+		// 			role: 'assistant',
+		// 			content: ' data'
+		// 		},
+		// 		done: false
+		// 	},
+		// 	{
+		// 		model: 'llama3:latest',
+		// 		created_at: '2024-07-18T10:39:08.6256907Z',
+		// 		message: {
+		// 			role: 'assistant',
+		// 			content: ' implementation'
+		// 		},
+		// 		done: true
+		// 	}
+		// ];
+
+		// let readableStream = createReadableStreamFromArray(TEST_DATA);
+
+		// let reader = readableStream.getReader();
+
+		while (true) {
+			const { value, done } = await reader.read();
+			if (done || stopResponseFlag || _chatId !== $chatId) {
+				responseMessage.done = true;
+				messages = messages;
+
+				if (stopResponseFlag) {
+					controller.abort('User: Stop Response');
+				} else {
+					const messages = createMessagesList(responseMessageId);
+					await chatCompletedHandler(model.id, responseMessageId, messages);
 				}
 
-				try {
-					let lines = value.split('\n');
+				_response = responseMessage.content;
+				break;
+			}
 
-					for (const line of lines) {
-						if (line !== '') {
-							console.log(line);
-							let data = JSON.parse(line);
+			try {
+				let lines = value.split('\n');
 
-							if ('citations' in data) {
-								responseMessage.citations = data.citations;
+				for (const line of lines) {
+					if (line !== '') {
+						console.log(line);
+						let data = JSON.parse(line);
+
+						if ('citations' in data) {
+							responseMessage.citations = data.citations;
+							continue;
+						}
+
+						if ('detail' in data) {
+							throw data;
+						}
+
+						if (data.done == false) {
+							if (responseMessage.content == '' && data.message.content == '\n') {
 								continue;
-							}
-
-							if ('detail' in data) {
-								throw data;
-							}
-
-							if (data.done == false) {
-								if (responseMessage.content == '' && data.message.content == '\n') {
-									continue;
-								} else {
-									responseMessage.content += data.message.content;
-
-									const sentences = extractSentencesForAudio(responseMessage.content);
-									sentences.pop();
-
-									// dispatch only last sentence and make sure it hasn't been dispatched before
-									if (
-										sentences.length > 0 &&
-										sentences[sentences.length - 1] !== responseMessage.lastSentence
-									) {
-										responseMessage.lastSentence = sentences[sentences.length - 1];
-										eventTarget.dispatchEvent(
-											new CustomEvent('chat', {
-												detail: { id: responseMessageId, content: sentences[sentences.length - 1] }
-											})
-										);
-									}
-
-									messages = messages;
-								}
 							} else {
-								responseMessage.done = true;
+								responseMessage.content += data.message.content;
 
-								if (responseMessage.content == '') {
-									responseMessage.error = {
-										code: 400,
-										content: `Oops! No text generated from Ollama, Please try again.`
-									};
+								const sentences = extractSentencesForAudio(responseMessage.content);
+								sentences.pop();
+
+								// dispatch only last sentence and make sure it hasn't been dispatched before
+								if (
+									sentences.length > 0 &&
+									sentences[sentences.length - 1] !== responseMessage.lastSentence
+								) {
+									responseMessage.lastSentence = sentences[sentences.length - 1];
+									eventTarget.dispatchEvent(
+										new CustomEvent('chat', {
+											detail: { id: responseMessageId, content: sentences[sentences.length - 1] }
+										})
+									);
 								}
 
-								responseMessage.context = data.context ?? null;
-								responseMessage.info = {
-									total_duration: data.total_duration,
-									load_duration: data.load_duration,
-									sample_count: data.sample_count,
-									sample_duration: data.sample_duration,
-									prompt_eval_count: data.prompt_eval_count,
-									prompt_eval_duration: data.prompt_eval_duration,
-									eval_count: data.eval_count,
-									eval_duration: data.eval_duration
-								};
 								messages = messages;
+							}
+						} else {
+							responseMessage.done = true;
 
-								if ($settings.notificationEnabled && !document.hasFocus()) {
-									const notification = new Notification(`${model.id}`, {
-										body: responseMessage.content,
-										icon: `${WEBUI_BASE_URL}/static/favicon.png`
-									});
-								}
+							if (responseMessage.content == '') {
+								responseMessage.error = {
+									code: 400,
+									content: `Oops! No text generated from Ollama, Please try again.`
+								};
+							}
 
-								if ($settings?.responseAutoCopy ?? false) {
-									copyToClipboard(responseMessage.content);
-								}
+							responseMessage.context = data.context ?? null;
+							responseMessage.info = {
+								total_duration: data.total_duration,
+								load_duration: data.load_duration,
+								sample_count: data.sample_count,
+								sample_duration: data.sample_duration,
+								prompt_eval_count: data.prompt_eval_count,
+								prompt_eval_duration: data.prompt_eval_duration,
+								eval_count: data.eval_count,
+								eval_duration: data.eval_duration
+							};
+							messages = messages;
 
-								if ($settings.responseAutoPlayback && !$showCallOverlay) {
-									await tick();
-									document.getElementById(`speak-button-${responseMessage.id}`)?.click();
-								}
+							if ($settings.notificationEnabled && !document.hasFocus()) {
+								const notification = new Notification(`${model.id}`, {
+									body: responseMessage.content,
+									icon: `${WEBUI_BASE_URL}/static/favicon.png`
+								});
+							}
+
+							if ($settings?.responseAutoCopy ?? false) {
+								copyToClipboard(responseMessage.content);
+							}
+
+							if ($settings.responseAutoPlayback && !$showCallOverlay) {
+								await tick();
+								document.getElementById(`speak-button-${responseMessage.id}`)?.click();
 							}
 						}
 					}
-				} catch (error) {
-					console.log(error);
-					if ('detail' in error) {
-						toast.error(error.detail);
-					}
-					break;
 				}
-
-				if (autoScroll) {
-					scrollToBottom();
+			} catch (error) {
+				console.log(error);
+				if ('detail' in error) {
+					toast.error(error.detail);
 				}
+				break;
 			}
+
+			if (autoScroll) {
+				scrollToBottom();
+			}
+		}
 
 			if ($chatId == _chatId) {
 				if ($settings.saveChatHistory ?? true) {
